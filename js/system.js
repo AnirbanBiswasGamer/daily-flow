@@ -88,15 +88,27 @@ if (cpuVal) cpuVal.textContent = "Wait...";
 window.wallpaperPropertyListener = {
   applyUserProperties: function (properties) {
     // Background Image Handler
+    // Background Image Handler
     if (properties.backgroundImage) {
-      let path = properties.backgroundImage.value;
+      // Handle WE object or Lively direct value
+      let path = properties.backgroundImage;
+      if (path && typeof path === 'object' && path.value !== undefined) {
+        path = path.value;
+      }
+
       if (path) {
-        // Prepare path (Lively usually sends relative path for folderDropdown)
-        // If it sends just filename, we prepend 'photos/'
-        if (path.indexOf('/') === -1 && path.indexOf('\\') === -1) {
-          path = 'photos/' + path;
+        // Fix Windows Backslashes to Forward Slashes (for CSS URL)
+        path = path.toString().replace(/\\/g, '/');
+
+        // Check if it's a relative filename (from photos folder)
+        // If it doesn't look like a full path (C:/ or http), assume local
+        if (path.indexOf(':') === -1 && !path.startsWith('/') && !path.startsWith('file')) {
+          // Ensure we don't double-prepend if Lively already sent "photos/img.jpg"
+          if (!path.startsWith('photos/')) {
+            path = 'photos/' + path;
+          }
         }
-        // Apply to background div
+
         const bgEl = document.querySelector('.background');
         if (bgEl) {
           bgEl.style.backgroundImage = `url('${path}')`;
