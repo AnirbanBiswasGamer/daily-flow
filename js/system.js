@@ -109,28 +109,54 @@ window.wallpaperPropertyListener = {
           }
         }
 
-        console.log("Applying Background:", path);
+        // DEBUG OVERLAY (REMOVE LATER)
+        let debugEl = document.getElementById('debug-overlay');
+        if (!debugEl) {
+          debugEl = document.createElement('div');
+          debugEl.id = 'debug-overlay';
+          debugEl.style.position = 'absolute';
+          debugEl.style.top = '10px';
+          debugEl.style.left = '10px';
+          debugEl.style.background = 'rgba(0,0,0,0.8)';
+          debugEl.style.color = '#0f0';
+          debugEl.style.padding = '10px';
+          debugEl.style.zIndex = '9999';
+          debugEl.style.fontSize = '12px';
+          debugEl.style.pointerEvents = 'none';
+          document.body.appendChild(debugEl);
+        }
+
+        const isVideo = path.match(/\.(mp4|webm|mkv|mov|avi|wmv)$/i);
+        const encodedPath = encodeURI(path);
+
+        debugEl.innerHTML = `
+          <strong>DEBUG INFO:</strong><br>
+          Raw Path: ${path}<br>
+          Is Video: ${!!isVideo}<br>
+          Final Src: ${encodedPath}<br>
+        `;
+
+        // console.log("Applying Background:", path);
 
         const bgEl = document.querySelector('.background');
         const videoEl = document.getElementById('bgVideo');
 
-        // Check Extension
-        const isVideo = path.match(/\.(mp4|webm|mkv|mov|avi|wmv)$/i);
-
         if (isVideo && videoEl) {
-          videoEl.src = path;
+          videoEl.src = encodedPath; // Use encoded for src too? Safe.
           videoEl.style.display = 'block';
-          videoEl.play().catch(e => console.warn("Autoplay blocked", e));
-          if (bgEl) bgEl.style.backgroundImage = 'none'; // Clear static img
+          videoEl.play().catch(e => {
+            console.warn("Autoplay blocked", e);
+            debugEl.innerHTML += `<br>Play Error: ${e.message}`;
+          });
+          if (bgEl) bgEl.style.backgroundImage = 'none';
         } else {
           if (videoEl) {
             videoEl.pause();
             videoEl.style.display = 'none';
           }
           if (bgEl) {
-            // Use encodeURI to handle spaces but preserve '/' and ':'
-            const encodedPath = encodeURI(path);
             bgEl.style.backgroundImage = `url('${encodedPath}')`;
+            debugEl.innerHTML += `<br>Set CSS BG: ${encodedPath}`;
           }
         }
       }
