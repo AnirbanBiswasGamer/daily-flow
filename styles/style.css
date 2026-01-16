@@ -408,22 +408,47 @@ canvas {
 }
 
 /* TASK ROW & CHECKBOX */
+/* TASK ROW & SUMMARY */
 .task-row {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  /* Vertical for summary + details */
   padding: 14px;
-  /* Increased padding */
   border-radius: 12px;
   background: #2d2e32;
-  /* Paper Theme */
   margin-bottom: 8px;
-  align-items: center;
   transition: all 0.2s;
   border: 1px solid rgba(255, 255, 255, 0.05);
-  /* Subtle border */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  gap: 0;
+  /* Gap handled by children margins if needed */
 }
 
+.task-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+}
+
+/* Ensure content takes available space */
+.task-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  word-break: break-all;
+}
+
+.task-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Update hover effect to apply to main row */
 .task-row:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
@@ -474,25 +499,35 @@ canvas {
   display: block;
 }
 
-.task-content {
-  flex: 1;
-  word-break: break-word;
-}
+/* Old .task-content rule replaced above */
 
-.task-del {
-  background: none;
+/* Modern Action Buttons */
+.remove-btn {
+  background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.4);
   cursor: pointer;
-  padding: 4px;
-  font-size: 18px;
-  line-height: 1;
-  flex-shrink: 0;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
 }
 
-.task-del:hover {
+.remove-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
   color: #ff6b6b;
+  /* Red for delete */
 }
+
+/* Specific overrides */
+.remove-btn.simple:hover {
+  color: white;
+  /* White for expand */
+}
+
+/* Remove old text-based styles if present */
 
 /* DEADLINE BADGES */
 .deadline-badge {
@@ -598,6 +633,35 @@ canvas {
   margin-bottom: 4px;
   align-items: center;
   transition: opacity 0.2s;
+}
+
+/* Inline Input styling */
+.subtask-input-row {
+  margin-top: 8px;
+  padding-left: 24px;
+  /* Align with text */
+}
+
+.subtask-add-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 4px 0;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.subtask-add-input:focus {
+  border-bottom-color: rgba(255, 255, 255, 0.6);
+  color: white;
+}
+
+.subtask-add-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .subtask-row.done {

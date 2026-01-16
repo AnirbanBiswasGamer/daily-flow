@@ -15,5 +15,16 @@
         "text": "Force Demo Mode",
         "type": "checkbox",
         "value": false
+    },
+    "quoteInterval": {
+        "text": "Quote Refresh Interval",
+        "type": "dropdown",
+        "value": 1,
+        "items": [
+            "1 Hour",
+            "3 Hours",
+            "6 Hours",
+            "1 Day"
+        ]
     }
 }

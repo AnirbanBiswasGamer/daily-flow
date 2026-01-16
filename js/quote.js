@@ -43,5 +43,19 @@ if (quoteWidget) {
 // Initial fetch
 fetchQuote();
 
-// Refresh every 3 hours
-setInterval(fetchQuote, 10800000);
+// Refresh Interval Logic
+let quoteIntervalFn;
+
+window.updateQuoteInterval = function (selectionIndex) {
+    // Map index to milliseconds
+    // 0: 1 Hour, 1: 3 Hours, 2: 6 Hours, 3: 1 Day
+    const intervals = [3600000, 10800000, 21600000, 86400000];
+    const ms = intervals[selectionIndex] || 10800000;
+
+    if (quoteIntervalFn) clearInterval(quoteIntervalFn);
+    quoteIntervalFn = setInterval(fetchQuote, ms);
+    console.log("Quote Interval Updated:", ms);
+};
+
+// Initial Start (Default 3h = Index 1)
+window.updateQuoteInterval(1);

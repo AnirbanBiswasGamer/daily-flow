@@ -120,27 +120,31 @@ renderCalendar();
 
 /* TASKS + AGENDA */
 /* TASKS + AGENDA */
+// SVG Icons Helper
+function getIcon(name) {
+  const icons = {
+    trash: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`,
+    chevronDown: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`,
+    chevronUp: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`,
+    plus: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`
+  };
+  return icons[name] || '';
+}
+
 function renderTasks() {
   if (!taskList || !agendaList) return;
   taskList.innerHTML = "";
   agendaList.innerHTML = "";
 
-  // Filter tasks for selected date (show both done and not done)
-  // If task has deadline, show it on all days from date to deadline
-  // If no deadline, show only on exact date
   const selectedDateTasks = tasks.filter(t => {
     if (!t.date) return false;
-
     if (t.deadline) {
-      // Show task on all days from start date to deadline
       return selectedDate >= t.date && selectedDate <= t.deadline;
     } else {
-      // Show only on exact date
       return t.date === selectedDate;
     }
   });
 
-  // Sort selected date tasks by time
   const sortedTasks = [...selectedDateTasks].map((t, originalIndex) => {
     const fullIndex = tasks.indexOf(t);
     return { ...t, originalIndex: fullIndex };
@@ -151,9 +155,7 @@ function renderTasks() {
   });
 
   sortedTasks.forEach((t) => {
-    const index = t.originalIndex;
-
-    // Format time
+    const index = t.originalIndex; // ID
     const taskDate = new Date(`${t.date}T${t.time}`);
     const timeStr = taskDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -163,18 +165,16 @@ function renderTasks() {
       const deadlineDate = new Date(t.deadline);
       const today = new Date(selectedDate);
       const daysUntil = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
-
       let badgeClass = "deadline-badge";
       if (daysUntil < 0) badgeClass += " overdue";
       else if (daysUntil === 0) badgeClass += " today";
       else if (daysUntil <= 2) badgeClass += " urgent";
       else badgeClass += " normal";
-
       const deadlineStr = deadlineDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       deadlineBadge = `<span class="${badgeClass}">Due ${deadlineStr}</span>`;
     }
 
-    // Progress badge (if has subtasks)
+    // Progress badge
     let progressBadge = "";
     if (t.subtasks && t.subtasks.length > 0) {
       const completed = t.subtasks.filter(st => st.done).length;
@@ -183,66 +183,64 @@ function renderTasks() {
       progressBadge = `<span class="progress-badge ${allDone ? 'complete' : ''}">${completed}/${total} ✓</span>`;
     }
 
-    // Task List Item with checkbox
-    const row = document.createElement("div");
-    row.className = "task-row" + (t.done ? " done" : "");
-    row.id = `task-${index}`;
+    // CREATE TASK ROW
+    const div = document.createElement("div");
+    div.className = "task-row" + (t.done ? " done" : "");
+    div.setAttribute("data-id", index); // Helper for focus
 
-    // Main task checkbox - disabled if has incomplete subtasks
-    const hasIncompleteSubtasks = t.subtasks && t.subtasks.some(st => !st.done);
-    const checkboxDisabled = hasIncompleteSubtasks ? 'style="opacity:0.3; cursor:not-allowed;"' : '';
-
-    row.innerHTML = `
-      <div class="task-check ${hasIncompleteSubtasks ? 'disabled' : ''}" onclick="${hasIncompleteSubtasks ? '' : `toggleTask(${index})`}" ${checkboxDisabled}></div>
-      <div class="task-content" onclick="toggleTaskExpand(${index})">
-        ${t.text} 
-        ${progressBadge}
-        ${deadlineBadge}
-        <span style="opacity:0.6; font-size:0.9em">— ${timeStr}</span>
-        ${t.subtasks && t.subtasks.length > 0 ? '<span class="expand-icon">▼</span>' : ''}
-      </div>
-      <button class="task-add-sub" onclick="showSubtaskInput(${index})" title="Add sub-task">+</button>
-      <button class="task-del" onclick="removeTask(${index})">×</button>
-    `;
-    taskList.appendChild(row);
-
-    // Sub-tasks (if any)
+    // Subtasks HTML
+    let subtasksHtml = "";
     if (t.subtasks && t.subtasks.length > 0) {
-      const subtaskContainer = document.createElement("div");
-      subtaskContainer.className = "subtask-container collapsed";
-      subtaskContainer.id = `subtasks-${index}`;
-
-      t.subtasks.forEach((st, stIndex) => {
-        const stRow = document.createElement("div");
-        stRow.className = "subtask-row" + (st.done ? " done" : "");
-        stRow.innerHTML = `
-          <div class="subtask-check" onclick="toggleSubtask(${index}, ${stIndex})"></div>
-          <div class="subtask-text">${st.text}</div>
-          <button class="subtask-del" onclick="removeSubtask(${index}, ${stIndex})">×</button>
-        `;
-        subtaskContainer.appendChild(stRow);
-      });
-
-      taskList.appendChild(subtaskContainer);
+      subtasksHtml = t.subtasks.map((st, sIdx) => `
+        <div class="subtask-row ${st.done ? "done" : ""}">
+          <div class="subtask-check" onclick="toggleSubtask(${index}, ${sIdx}, event)"></div>
+          <span class="subtask-text">${st.text}</span>
+          <button class="remove-btn" onclick="removeSubtask(${index}, ${sIdx}, event)">${getIcon('trash')}</button>
+        </div>
+      `).join("");
     }
+
+    // Inline Input HTML
+    const inlineInputHtml = `
+      <div class="subtask-input-row" onclick="event.stopPropagation()">
+          <input type="text" class="subtask-add-input" placeholder="Type subtask & enter..." 
+           onkeydown="handleSubtaskInput(event, ${index})">
+      </div>
+    `;
+
+    // Render Full Card
+    div.innerHTML = `
+      <div class="task-summary">
+        <div class="task-content">
+          <div class="task-check" onclick="toggleTask(${index}, event)"></div>
+          <span class="task-text">${t.text}</span>
+          ${deadlineBadge}
+          ${progressBadge}
+          <span style="opacity:0.6; font-size:0.9em; margin-left:8px;">${timeStr}</span>
+        </div>
+        <div class="task-actions">
+         <button class="remove-btn simple" title="Expand" onclick="toggleTaskExpand(${index})">
+           ${t.expanded ? getIcon('chevronUp') : getIcon('chevronDown')}
+         </button>
+         <button class="remove-btn" title="Delete" onclick="removeTask(${index}, event)">${getIcon('trash')}</button>
+        </div>
+      </div>
+      <div class="task-details" style="display: ${t.expanded ? "block" : "none"}">
+         ${subtasksHtml}
+         ${inlineInputHtml}
+      </div>
+    `;
+    taskList.appendChild(div);
   });
 
-  // Agenda shows ALL upcoming incomplete tasks (not just selected date)
+  // AGENDA GENERATION
   const allUpcoming = [...tasks]
-    .filter(t => !t.done && t.date) // Skip tasks without date field
-    .map((t, originalIndex) => ({ ...t, originalIndex }))
-    .sort((a, b) => {
-      const dateA = new Date(`${a.date}T${a.time}`);
-      const dateB = new Date(`${b.date}T${b.time}`);
-      return dateA - dateB;
-    });
+    .filter(t => !t.done && t.date)
+    .sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
 
   allUpcoming.forEach(t => {
+    if (isNaN(new Date(`${t.date}T${t.time}`).getTime())) return;
     const taskDate = new Date(`${t.date}T${t.time}`);
-
-    // Skip if invalid date
-    if (isNaN(taskDate.getTime())) return;
-
     const dateStr = taskDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     const timeStr = taskDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -252,6 +250,28 @@ function renderTasks() {
     agendaList.appendChild(agenda);
   });
 }
+
+// Handler for Inline Input
+window.handleSubtaskInput = function (e, index) {
+  if (e.key === 'Enter') {
+    const text = e.target.value.trim();
+    if (text) {
+      if (!tasks[index].subtasks) tasks[index].subtasks = [];
+      tasks[index].subtasks.push({ text, done: false });
+      tasks[index].expanded = true; // Ensure open
+      saveTasks();
+
+      // Restore focus after render
+      setTimeout(() => {
+        const input = document.querySelector(`.task-row[data-id="${index}"] .subtask-add-input`);
+        if (input) input.focus();
+      }, 50);
+    }
+  }
+}
+
+// Deprecated functions (remove or leave empty)
+window.showSubtaskInput = function () { };
 
 const taskTimeInput = document.getElementById("taskTime");
 const taskDeadlineInput = document.getElementById("taskDeadline");
@@ -380,14 +400,10 @@ window.showSubtaskInput = function (taskIndex) {
 }
 
 window.toggleTaskExpand = function (taskIndex) {
-  const container = document.getElementById(`subtasks-${taskIndex}`);
-  if (container) {
-    container.classList.toggle("collapsed");
-    const icon = document.querySelector(`#task-${taskIndex} .expand-icon`);
-    if (icon) {
-      icon.textContent = container.classList.contains("collapsed") ? "▼" : "▲";
-    }
-  }
+  // Toggle state in data model
+  if (tasks[taskIndex].expanded === undefined) tasks[taskIndex].expanded = false;
+  tasks[taskIndex].expanded = !tasks[taskIndex].expanded;
+  saveTasks(); // Re-render happens here
 }
 
 renderTasks();
