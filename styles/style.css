@@ -17,7 +17,8 @@
   background-position: center;
   transition: background-image 0.5s ease;
   /* Default BG */
-  background-image: url('../photos/wallpaper.png');
+  /* Default BG removed to allow user selection */
+  /* background-image: url('../photos/wallpaper.png'); */
 }
 
 #bgVideo {
