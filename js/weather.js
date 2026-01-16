@@ -24,6 +24,49 @@ window.refreshWeather = function () {
       const weatherDesc = getWeatherDescription(weatherCode);
       const weatherIcon = getWeatherIcon(weatherCode);
 
+      // Dynamic Background (Japanese Aesthetic)
+      // Using simple mapping or Unsplash Source
+      // const condition = data.current.weather_code; // This variable is redundant as weatherCode already exists
+      let keyword = "nature";
+      const code = data.current.weather_code; // Use weatherCode from API response
+
+      // WMO Code mapping to keywords
+      if (code === 0) keyword = "sunny,sky";
+      else if (code >= 1 && code <= 3) keyword = "cloudy,mountain";
+      else if (code >= 45 && code <= 48) keyword = "fog,forest";
+      else if (code >= 51 && code <= 67) keyword = "rain,street,umbrella";
+      // Dynamic Background (Japanese Aesthetic + Season)
+      const month = new Date().getMonth(); // 0-11
+
+      // Determine Season in Japan
+      let season = "japan";
+      if (month >= 2 && month <= 4) season = "japan,sakura,spring"; // Spring
+      else if (month >= 5 && month <= 8) season = "japan,summer,green"; // Summer
+      else if (month >= 9 && month <= 10) season = "japan,autumn,maple"; // Autumn
+      else season = "japan,winter,snow"; // Winter
+
+      // Determine Weather Element
+      let weatherTag = "nature";
+      if (code === 0) weatherTag = "sunny,sky,shrine";
+      else if (code >= 1 && code <= 3) weatherTag = "cloudy,mountain";
+      else if (code >= 45 && code <= 48) weatherTag = "fog,forest";
+      else if (code >= 51 && code <= 67) weatherTag = "rain,umbrella,street";
+      else if (code >= 71 && code <= 77) weatherTag = "snow,village";
+      else if (code >= 80) weatherTag = "storm,rain";
+
+      // Combine tags: e.g. "japan,autumn,maple,rain,umbrella,street"
+      const tags = `${season},${weatherTag}`;
+
+      // Using LoremFlickr which supports tag combinations well
+      const bgUrl = `https://loremflickr.com/600/300/${tags}`;
+
+      weatherBox.style.backgroundImage = `
+        linear-gradient(rgba(45, 46, 50, 0.6), rgba(45, 46, 50, 0.6)),
+        url('${bgUrl}')
+      `;
+      weatherBox.style.backgroundSize = "cover";
+      weatherBox.style.backgroundPosition = "center";
+
       weatherBox.innerHTML = `
         <div style="font-size: 24px; margin-right: 12px;">${weatherIcon}</div>
         <div style="display: flex; flex-direction: column; align-items: flex-end;">

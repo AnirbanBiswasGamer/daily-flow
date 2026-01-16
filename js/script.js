@@ -29,7 +29,14 @@ try {
   console.error("Failed to load tasks:", e);
   tasks = []; // Fallback to empty
 }
-let selectedDate = new Date().toISOString().split('T')[0]; // Default to today
+// Helper for Local YYYY-MM-DD
+function getLocalYMD(d) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
+let selectedDate = getLocalYMD(new Date()); // Default to today (Local)
 
 /* DATE & TIME */
 /* DATE & TIME */
@@ -62,7 +69,7 @@ function renderCalendar() {
 
   for (let i = 1; i <= days; i++) {
     const el = document.createElement("div");
-    const dayDate = new Date(year, month, i).toISOString().split('T')[0];
+    const dayDate = getLocalYMD(new Date(year, month, i));
 
     let className = "day";
     if (i === today) className += " active";
@@ -388,7 +395,7 @@ renderTasks();
 /* REMINDERS */
 setInterval(() => {
   const now = new Date();
-  const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+  const currentDate = getLocalYMD(now); // YYYY-MM-DD (Local)
   const currentTime = now.toTimeString().slice(0, 5); // HH:MM
 
   tasks.forEach(t => {

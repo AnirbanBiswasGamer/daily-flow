@@ -6,6 +6,7 @@
   <title>Daily Flow</title>
   <link rel="stylesheet" href="styles/style.css">
   <link rel="stylesheet" href="styles/context.css">
+  <link rel="stylesheet" href="styles/scrollbar.css">
   <script>
     // Robust Lively Wallpaper Hook
     function livelySystemInformation(data) {
@@ -38,7 +39,9 @@
     };
   </script>
 
-  <div class="background"></div>
+  <div class="background">
+    <video id="bgVideo" loop muted autoplay playsinline style="display:none;"></video>
+  </div>
 
   <div class="viewport">
     <div class="app">
@@ -101,14 +104,17 @@
       <!-- RIGHT PANEL -->
       <section class="panel">
         <div id="weather"></div>
+        <div id="quote-widget"></div>
         <div class="calendar">
           <h2 id="month"></h2>
           <div class="calendar-grid" id="calendarGrid"></div>
         </div>
 
-        <div class="agenda">
-          <h3>Agenda</h3>
-          <div id="agendaList"></div>
+        <div class="agenda agenda-card">
+          <div class="agenda-header">
+            <h3>Agenda</h3>
+          </div>
+          <div id="agendaList" class="agenda-list"></div>
         </div>
       </section>
 
@@ -126,6 +132,7 @@
 
   <script src="js/script.js"></script>
   <script src="js/weather.js"></script>
+  <script src="js/quote.js"></script>
   <script src="js/system.js"></script>
   <script src="js/context.js"></script>
 

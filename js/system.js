@@ -103,15 +103,31 @@ window.wallpaperPropertyListener = {
         // Check if it's a relative filename (from photos folder)
         // If it doesn't look like a full path (C:/ or http), assume local
         if (path.indexOf(':') === -1 && !path.startsWith('/') && !path.startsWith('file')) {
-          // Ensure we don't double-prepend if Lively already sent "photos/img.jpg"
+          // Ensure we don't double-prepend
           if (!path.startsWith('photos/')) {
             path = 'photos/' + path;
           }
         }
 
         const bgEl = document.querySelector('.background');
-        if (bgEl) {
-          bgEl.style.backgroundImage = `url('${path}')`;
+        const videoEl = document.getElementById('bgVideo');
+
+        // Check Extension
+        const isVideo = path.match(/\.(mp4|webm|mkv|mov)$/i);
+
+        if (isVideo && videoEl) {
+          videoEl.src = path;
+          videoEl.style.display = 'block';
+          videoEl.play().catch(e => console.warn("Autoplay blocked", e));
+          if (bgEl) bgEl.style.backgroundImage = 'none'; // Clear static img
+        } else {
+          if (videoEl) {
+            videoEl.pause();
+            videoEl.style.display = 'none';
+          }
+          if (bgEl) {
+            bgEl.style.backgroundImage = `url('${path}')`;
+          }
         }
       }
     }
