@@ -128,8 +128,8 @@ window.wallpaperPropertyListener = {
             videoEl.style.display = 'none';
           }
           if (bgEl) {
-            // Encode path to handle spaces, but keep slashes
-            const encodedPath = path.split('/').map(p => encodeURIComponent(p)).join('/');
+            // Use encodeURI to handle spaces but preserve '/' and ':'
+            const encodedPath = encodeURI(path);
             bgEl.style.backgroundImage = `url('${encodedPath}')`;
           }
         }
