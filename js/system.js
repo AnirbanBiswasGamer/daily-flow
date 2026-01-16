@@ -87,7 +87,33 @@ if (cpuVal) cpuVal.textContent = "Wait...";
 // ==========================================
 window.wallpaperPropertyListener = {
   applyUserProperties: function (properties) {
-    // Background Image Handler
+    // GLOBAL DEBUG OVERLAY (Must show if function runs)
+    let debugEl = document.getElementById('debug-overlay');
+    if (!debugEl) {
+      debugEl = document.createElement('div');
+      debugEl.id = 'debug-overlay';
+      debugEl.style.position = 'absolute';
+      debugEl.style.top = '10px';
+      debugEl.style.left = '10px';
+      debugEl.style.background = 'rgba(0,0,0,0.85)';
+      debugEl.style.color = '#fff';
+      debugEl.style.border = '1px solid #0f0';
+      debugEl.style.padding = '10px';
+      debugEl.style.zIndex = '99999';
+      debugEl.style.fontSize = '11px';
+      debugEl.style.pointerEvents = 'none';
+      debugEl.style.whiteSpace = 'pre-wrap';
+      debugEl.style.fontFamily = 'monospace';
+      document.body.appendChild(debugEl);
+    }
+
+    // Dump properties to screen
+    try {
+      debugEl.innerHTML = `<strong>PROPS RECEIVED:</strong>\n${JSON.stringify(properties, null, 2).substring(0, 500)}`;
+    } catch (e) {
+      debugEl.textContent = "Props Error: " + e.message;
+    }
+
     // Background Image Handler
     if (properties.backgroundImage) {
       // Handle WE object or Lively direct value
@@ -109,32 +135,11 @@ window.wallpaperPropertyListener = {
           }
         }
 
-        // DEBUG OVERLAY (REMOVE LATER)
-        let debugEl = document.getElementById('debug-overlay');
-        if (!debugEl) {
-          debugEl = document.createElement('div');
-          debugEl.id = 'debug-overlay';
-          debugEl.style.position = 'absolute';
-          debugEl.style.top = '10px';
-          debugEl.style.left = '10px';
-          debugEl.style.background = 'rgba(0,0,0,0.8)';
-          debugEl.style.color = '#0f0';
-          debugEl.style.padding = '10px';
-          debugEl.style.zIndex = '9999';
-          debugEl.style.fontSize = '12px';
-          debugEl.style.pointerEvents = 'none';
-          document.body.appendChild(debugEl);
-        }
-
         const isVideo = path.match(/\.(mp4|webm|mkv|mov|avi|wmv)$/i);
         const encodedPath = encodeURI(path);
 
-        debugEl.innerHTML = `
-          <strong>DEBUG INFO:</strong><br>
-          Raw Path: ${path}<br>
-          Is Video: ${!!isVideo}<br>
-          Final Src: ${encodedPath}<br>
-        `;
+        // Append path info
+        debugEl.innerHTML += `\n\n<strong>PATH LOGIC:</strong>\nRaw: ${path}\nIs Video: ${!!isVideo}\nEncoded: ${encodedPath}`;
 
         // console.log("Applying Background:", path);
 
@@ -156,7 +161,7 @@ window.wallpaperPropertyListener = {
           }
           if (bgEl) {
             bgEl.style.backgroundImage = `url('${encodedPath}')`;
-            debugEl.innerHTML += `<br>Set CSS BG: ${encodedPath}`;
+            debugEl.innerHTML += `\nSet CSS BG`;
           }
         }
       }
