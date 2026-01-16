@@ -1,0 +1,11 @@
+
+# System Files
+Thumbs.db
+Desktop.ini
+
+# Lively
+.lively/
+*.zip
+
+# Logs
+*.log

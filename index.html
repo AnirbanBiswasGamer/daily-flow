@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Daily Flow</title>
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="styles/context.css">
+  <script>
+    // Robust Lively Wallpaper Hook
+    function livelySystemInformation(data) {
+      if (window.updateLivelyStats) {
+        window.updateLivelyStats(data);
+      } else {
+        // Buffer simpler data or just set a flag
+        window._livelyDataBuffered = data;
+      }
+    }
+  </script>
+</head>
+
+<body>
+
+  <!-- VISUAL ERROR LOGGER -->
+  <div id="error-log"
+    style="position: fixed; top: 0; left: 0; width: 100%; background: rgba(50, 0, 0, 0.8); color: #ffcccc; padding: 10px; z-index: 9999; display: none; font-family: monospace; font-size: 12px; pointer-events: none;">
+  </div>
+  <script>
+    window.onerror = function (msg, url, line, col, error) {
+      const log = document.getElementById('error-log');
+      if (log) {
+        log.style.display = 'block';
+        log.innerHTML += `<div>Error: ${msg} (Line ${line})</div>`;
+      }
+      // Also log to console just in case
+      console.error(msg, error);
+      return false;
+    };
+  </script>
+
+  <div class="background"></div>
+
+  <div class="viewport">
+    <div class="app">
+
+      <!-- LEFT PANEL -->
+      <section class="panel">
+        <header>
+          <div class="header-content">
+            <div>
+              <h1>Daily Flow</h1>
+              <p id="date"></p>
+            </div>
+
+            <!-- SYSTEM STATS -->
+            <div class="system-stats">
+              <div class="stat-card">
+                <div class="stat-info">
+                  <span class="stat-label">CPU</span>
+                  <span class="stat-value" id="cpuVal">0%</span>
+                </div>
+                <canvas id="cpuGraph" width="80" height="30"></canvas>
+              </div>
+              <div class="stat-card">
+                <div class="stat-info">
+                  <span class="stat-label">RAM</span>
+                  <span class="stat-value" id="ramVal">0%</span>
+                </div>
+                <canvas id="ramGraph" width="80" height="30"></canvas>
+              </div>
+              <div class="stat-card">
+                <div class="stat-info">
+                  <span class="stat-label">GPU</span>
+                  <span class="stat-value" id="gpuVal">0%</span>
+                </div>
+                <canvas id="gpuGraph" width="80" height="30"></canvas>
+              </div>
+              <div class="stat-card">
+                <div class="stat-info">
+                  <span class="stat-label">NET</span>
+                  <span class="stat-value" id="netVal">0</span>
+                </div>
+                <canvas id="netGraph" width="80" height="30"></canvas>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="add-task">
+          <input type="text" id="taskInput" placeholder="Add a new task...">
+          <input type="time" id="taskTime">
+          <input type="text" id="taskDeadline" placeholder="Select Deadline..." readonly style="cursor: pointer;">
+          <button id="addTaskBtn">+</button>
+        </div>
+
+        <div class="tasks" id="taskList"></div>
+
+
+      </section>
+
+      <!-- RIGHT PANEL -->
+      <section class="panel">
+        <div id="weather"></div>
+        <div class="calendar">
+          <h2 id="month"></h2>
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+
+        <div class="agenda">
+          <h3>Agenda</h3>
+          <div id="agendaList"></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- RIGHT CLICK MENU -->
+  <ul id="contextMenu">
+    <li onclick="refreshWeather()">Refresh Weather</li>
+    <li onclick="clearTasks()">Clear Tasks</li>
+  </ul>
+
+  <!-- Audio alarm (optional - add reminder.mp3 file to enable) -->
+  <!-- <audio id="alarm" src="reminder.mp3"></audio> -->
+
+  <script src="js/script.js"></script>
+  <script src="js/weather.js"></script>
+  <script src="js/system.js"></script>
+  <script src="js/context.js"></script>
+
+</body>
+
+</html>

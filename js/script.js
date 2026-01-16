@@ -1,0 +1,403 @@
+/* WINDOWS ACCENT COLOR */
+if (window.wallpaperPropertyListener) {
+  window.wallpaperPropertyListener.applyUserProperties = function (props) {
+    if (props.accentcolor) {
+      document.documentElement.style.setProperty(
+        "--accent",
+        `rgb(${props.accentcolor.value.join(",")})`
+      );
+    }
+  };
+}
+
+const dateEl = document.getElementById("date");
+const monthEl = document.getElementById("month");
+const calendarGrid = document.getElementById("calendarGrid");
+const taskList = document.getElementById("taskList");
+const agendaList = document.getElementById("agendaList");
+const alarm = document.getElementById("alarm");
+
+const taskInput = document.getElementById("taskInput");
+const addTaskBtn = document.getElementById("addTaskBtn");
+const bgInput = document.getElementById("bgInput");
+
+let tasks = [];
+try {
+  const stored = localStorage.getItem("tasks");
+  tasks = stored ? JSON.parse(stored) : [];
+} catch (e) {
+  console.error("Failed to load tasks:", e);
+  tasks = []; // Fallback to empty
+}
+let selectedDate = new Date().toISOString().split('T')[0]; // Default to today
+
+/* DATE & TIME */
+/* DATE & TIME */
+function updateDate() {
+  if (!dateEl) return;
+  const d = new Date();
+  dateEl.textContent = d.toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric"
+  });
+}
+updateDate();
+
+/* CALENDAR (INTERACTIVE) */
+/* CALENDAR (INTERACTIVE) */
+function renderCalendar() {
+  if (!monthEl || !calendarGrid) return;
+  const d = new Date();
+  monthEl.textContent = d.toLocaleDateString(undefined, {
+    month: "long",
+    year: "numeric"
+  });
+
+  calendarGrid.innerHTML = "";
+  const year = d.getFullYear();
+  const month = d.getMonth();
+  const days = new Date(year, month + 1, 0).getDate();
+  const today = d.getDate();
+
+  for (let i = 1; i <= days; i++) {
+    const el = document.createElement("div");
+    const dayDate = new Date(year, month, i).toISOString().split('T')[0];
+
+    let className = "day";
+    if (i === today) className += " active";
+    if (dayDate === selectedDate) className += " selected";
+
+    el.className = className;
+    el.textContent = i;
+    el.onclick = () => selectDate(dayDate);
+    calendarGrid.appendChild(el);
+  }
+}
+
+// Deadline Selection Mode
+let isSelectingDeadline = false;
+
+function selectDate(date) {
+  if (isSelectingDeadline) {
+    if (taskDeadlineInput) taskDeadlineInput.value = date;
+    isSelectingDeadline = false;
+
+    // Reset UI
+    const cal = document.querySelector('.calendar');
+    if (cal) cal.classList.remove('deadline-mode');
+
+    // Reset title
+    const d = new Date();
+    if (monthEl) monthEl.textContent = d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+
+    renderCalendar();
+    return;
+  }
+
+  selectedDate = date;
+  renderCalendar();
+  renderTasks();
+}
+
+renderCalendar();
+
+/* BACKGROUND IMAGE */
+/* BACKGROUND IMAGE */
+// BACKGROUND IMG Handled by Lively Property Listener in system.js
+// Old localStorage logic removed to prevent conflicts.
+
+// Init background
+// Init handled by system.js
+
+
+/* TASKS + AGENDA */
+/* TASKS + AGENDA */
+function renderTasks() {
+  if (!taskList || !agendaList) return;
+  taskList.innerHTML = "";
+  agendaList.innerHTML = "";
+
+  // Filter tasks for selected date (show both done and not done)
+  // If task has deadline, show it on all days from date to deadline
+  // If no deadline, show only on exact date
+  const selectedDateTasks = tasks.filter(t => {
+    if (!t.date) return false;
+
+    if (t.deadline) {
+      // Show task on all days from start date to deadline
+      return selectedDate >= t.date && selectedDate <= t.deadline;
+    } else {
+      // Show only on exact date
+      return t.date === selectedDate;
+    }
+  });
+
+  // Sort selected date tasks by time
+  const sortedTasks = [...selectedDateTasks].map((t, originalIndex) => {
+    const fullIndex = tasks.indexOf(t);
+    return { ...t, originalIndex: fullIndex };
+  }).sort((a, b) => {
+    const timeA = new Date(`${a.date}T${a.time}`);
+    const timeB = new Date(`${b.date}T${b.time}`);
+    return timeA - timeB;
+  });
+
+  sortedTasks.forEach((t) => {
+    const index = t.originalIndex;
+
+    // Format time
+    const taskDate = new Date(`${t.date}T${t.time}`);
+    const timeStr = taskDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Deadline badge
+    let deadlineBadge = "";
+    if (t.deadline) {
+      const deadlineDate = new Date(t.deadline);
+      const today = new Date(selectedDate);
+      const daysUntil = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
+
+      let badgeClass = "deadline-badge";
+      if (daysUntil < 0) badgeClass += " overdue";
+      else if (daysUntil === 0) badgeClass += " today";
+      else if (daysUntil <= 2) badgeClass += " urgent";
+      else badgeClass += " normal";
+
+      const deadlineStr = deadlineDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      deadlineBadge = `<span class="${badgeClass}">Due ${deadlineStr}</span>`;
+    }
+
+    // Progress badge (if has subtasks)
+    let progressBadge = "";
+    if (t.subtasks && t.subtasks.length > 0) {
+      const completed = t.subtasks.filter(st => st.done).length;
+      const total = t.subtasks.length;
+      const allDone = completed === total;
+      progressBadge = `<span class="progress-badge ${allDone ? 'complete' : ''}">${completed}/${total} ✓</span>`;
+    }
+
+    // Task List Item with checkbox
+    const row = document.createElement("div");
+    row.className = "task-row" + (t.done ? " done" : "");
+    row.id = `task-${index}`;
+
+    // Main task checkbox - disabled if has incomplete subtasks
+    const hasIncompleteSubtasks = t.subtasks && t.subtasks.some(st => !st.done);
+    const checkboxDisabled = hasIncompleteSubtasks ? 'style="opacity:0.3; cursor:not-allowed;"' : '';
+
+    row.innerHTML = `
+      <div class="task-check ${hasIncompleteSubtasks ? 'disabled' : ''}" onclick="${hasIncompleteSubtasks ? '' : `toggleTask(${index})`}" ${checkboxDisabled}></div>
+      <div class="task-content" onclick="toggleTaskExpand(${index})">
+        ${t.text} 
+        ${progressBadge}
+        ${deadlineBadge}
+        <span style="opacity:0.6; font-size:0.9em">— ${timeStr}</span>
+        ${t.subtasks && t.subtasks.length > 0 ? '<span class="expand-icon">▼</span>' : ''}
+      </div>
+      <button class="task-add-sub" onclick="showSubtaskInput(${index})" title="Add sub-task">+</button>
+      <button class="task-del" onclick="removeTask(${index})">×</button>
+    `;
+    taskList.appendChild(row);
+
+    // Sub-tasks (if any)
+    if (t.subtasks && t.subtasks.length > 0) {
+      const subtaskContainer = document.createElement("div");
+      subtaskContainer.className = "subtask-container collapsed";
+      subtaskContainer.id = `subtasks-${index}`;
+
+      t.subtasks.forEach((st, stIndex) => {
+        const stRow = document.createElement("div");
+        stRow.className = "subtask-row" + (st.done ? " done" : "");
+        stRow.innerHTML = `
+          <div class="subtask-check" onclick="toggleSubtask(${index}, ${stIndex})"></div>
+          <div class="subtask-text">${st.text}</div>
+          <button class="subtask-del" onclick="removeSubtask(${index}, ${stIndex})">×</button>
+        `;
+        subtaskContainer.appendChild(stRow);
+      });
+
+      taskList.appendChild(subtaskContainer);
+    }
+  });
+
+  // Agenda shows ALL upcoming incomplete tasks (not just selected date)
+  const allUpcoming = [...tasks]
+    .filter(t => !t.done && t.date) // Skip tasks without date field
+    .map((t, originalIndex) => ({ ...t, originalIndex }))
+    .sort((a, b) => {
+      const dateA = new Date(`${a.date}T${a.time}`);
+      const dateB = new Date(`${b.date}T${b.time}`);
+      return dateA - dateB;
+    });
+
+  allUpcoming.forEach(t => {
+    const taskDate = new Date(`${t.date}T${t.time}`);
+
+    // Skip if invalid date
+    if (isNaN(taskDate.getTime())) return;
+
+    const dateStr = taskDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const timeStr = taskDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const agenda = document.createElement("div");
+    agenda.className = "task";
+    agenda.textContent = `${dateStr} ${timeStr} • ${t.text}`;
+    agendaList.appendChild(agenda);
+  });
+}
+
+const taskTimeInput = document.getElementById("taskTime");
+const taskDeadlineInput = document.getElementById("taskDeadline");
+
+// Deadline Input Click
+if (taskDeadlineInput) {
+  taskDeadlineInput.addEventListener('click', () => {
+    isSelectingDeadline = true;
+
+    // UI Cues
+    const cal = document.querySelector('.calendar');
+    if (cal) cal.classList.add('deadline-mode');
+    if (monthEl) monthEl.textContent = "Select Deadline Date";
+
+    renderCalendar();
+  });
+}
+
+// Set default time to current time
+function setDefaultTime() {
+  if (!taskTimeInput) return;
+  const now = new Date();
+  const timeString = now.toTimeString().slice(0, 5); // HH:MM
+  taskTimeInput.value = timeString;
+}
+setDefaultTime();
+
+// Add via UI
+// Add via UI
+if (addTaskBtn) {
+  addTaskBtn.addEventListener("click", () => {
+    const text = taskInput.value.trim();
+    if (!text) return;
+
+    // Use selectedDate from calendar
+    const date = selectedDate;
+
+    // Get time from input, or use current time as default
+    let time = taskTimeInput.value;
+    if (!time) {
+      const now = new Date();
+      time = now.toTimeString().slice(0, 5); // HH:MM
+    }
+
+    // Get deadline (optional)
+    const deadline = taskDeadlineInput.value || null;
+
+    addTask(text, date, time, deadline);
+    taskInput.value = "";
+    taskDeadlineInput.value = "";
+    setDefaultTime(); // Reset to current time
+  });
+}
+
+if (taskInput) {
+  taskInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") addTaskBtn.click();
+  });
+}
+
+function addTask(text, date, time, deadline) {
+  tasks.push({ text, date, time, deadline, done: false });
+  saveTasks();
+}
+
+window.toggleTask = function (index) {
+  tasks[index].done = !tasks[index].done;
+  saveTasks();
+}
+
+window.removeTask = function (index) {
+  tasks.splice(index, 1);
+  saveTasks();
+}
+
+function saveTasks() {
+  try {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  } catch (e) {
+    if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+      // Storage full! Likely due to image.
+      alert("⚠️ Storage full! Tasks cannot be saved.\n\nTry resetting the custom background image to free up space.");
+      console.error("Storage full, save failed:", e);
+
+      // Attempt to clear background to save tasks (optional safety net)
+      // localStorage.removeItem("custom-bg");
+      // localStorage.setItem("tasks", JSON.stringify(tasks));
+    } else {
+      console.error("Save failed:", e);
+    }
+  }
+  renderTasks();
+}
+
+function clearTasks() {
+  tasks = [];
+  saveTasks();
+}
+
+// Sub-task management
+window.toggleSubtask = function (taskIndex, subtaskIndex) {
+  if (!tasks[taskIndex].subtasks) tasks[taskIndex].subtasks = [];
+  tasks[taskIndex].subtasks[subtaskIndex].done = !tasks[taskIndex].subtasks[subtaskIndex].done;
+
+  // Auto-complete main task if all subtasks are done
+  const allDone = tasks[taskIndex].subtasks.every(st => st.done);
+  if (allDone && tasks[taskIndex].subtasks.length > 0) {
+    tasks[taskIndex].done = true;
+  }
+
+  saveTasks();
+}
+
+window.removeSubtask = function (taskIndex, subtaskIndex) {
+  tasks[taskIndex].subtasks.splice(subtaskIndex, 1);
+  saveTasks();
+}
+
+window.showSubtaskInput = function (taskIndex) {
+  const subtaskText = prompt("Enter sub-task:");
+  if (subtaskText && subtaskText.trim()) {
+    if (!tasks[taskIndex].subtasks) tasks[taskIndex].subtasks = [];
+    tasks[taskIndex].subtasks.push({ text: subtaskText.trim(), done: false });
+    saveTasks();
+  }
+}
+
+window.toggleTaskExpand = function (taskIndex) {
+  const container = document.getElementById(`subtasks-${taskIndex}`);
+  if (container) {
+    container.classList.toggle("collapsed");
+    const icon = document.querySelector(`#task-${taskIndex} .expand-icon`);
+    if (icon) {
+      icon.textContent = container.classList.contains("collapsed") ? "▼" : "▲";
+    }
+  }
+}
+
+renderTasks();
+
+/* REMINDERS */
+setInterval(() => {
+  const now = new Date();
+  const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+  const currentTime = now.toTimeString().slice(0, 5); // HH:MM
+
+  tasks.forEach(t => {
+    // Check if task is due now (match both date and time)
+    if (!t.done && t.date === currentDate && t.time === currentTime) {
+      if (alarm) {
+        alarm.volume = 0.4;
+        alarm.play().catch(e => console.log("Audio play failed (user interaction needed first?)", e));
+      }
+    }
+  });
+}, 60000);

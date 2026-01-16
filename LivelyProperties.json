@@ -1,0 +1,19 @@
+{
+    "backgroundImage": {
+        "type": "folderDropdown",
+        "folder": "photos",
+        "text": "Select Background",
+        "filter": "*.jpg|*.png|*.gif|*.webp|*.jpeg",
+        "value": "default.jpg"
+    },
+    "cityName": {
+        "text": "City Name (Leave empty to auto-detect)",
+        "type": "textbox",
+        "value": ""
+    },
+    "showDemo": {
+        "text": "Force Demo Mode",
+        "type": "checkbox",
+        "value": false
+    }
+}
