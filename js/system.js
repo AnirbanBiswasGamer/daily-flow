@@ -109,11 +109,13 @@ window.wallpaperPropertyListener = {
           }
         }
 
+        console.log("Applying Background:", path);
+
         const bgEl = document.querySelector('.background');
         const videoEl = document.getElementById('bgVideo');
 
         // Check Extension
-        const isVideo = path.match(/\.(mp4|webm|mkv|mov)$/i);
+        const isVideo = path.match(/\.(mp4|webm|mkv|mov|avi|wmv)$/i);
 
         if (isVideo && videoEl) {
           videoEl.src = path;
@@ -126,7 +128,9 @@ window.wallpaperPropertyListener = {
             videoEl.style.display = 'none';
           }
           if (bgEl) {
-            bgEl.style.backgroundImage = `url('${path}')`;
+            // Encode path to handle spaces, but keep slashes
+            const encodedPath = path.split('/').map(p => encodeURIComponent(p)).join('/');
+            bgEl.style.backgroundImage = `url('${encodedPath}')`;
           }
         }
       }
