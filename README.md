@@ -53,3 +53,8 @@ Lively has a strict check that prevents importing folders with existing `LivelyI
 MIT License. Free to use and modify.
 Created by **Anirban B. (Spider)**.
 [aniplay.eu.org](https://aniplay.eu.org)
+
+## 🎨 Credits
+
+- **Original Image Creator**: [Pixiv Artwork](https://www.pixiv.net/en/artworks/68936009)
+- **Live Wallpaper Creator**: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3479521040)

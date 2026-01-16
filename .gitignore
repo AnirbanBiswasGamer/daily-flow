@@ -9,3 +9,6 @@ Desktop.ini
 
 # Logs
 *.log
+
+# Large Files (GitHub Limit 100MB)
+photos/anime-girl-balcony-view-red-balloons-moewalls-com.mp4

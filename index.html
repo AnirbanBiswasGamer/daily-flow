@@ -38,9 +38,13 @@
     };
   </script>
 
-  <div class="background">
-    <video id="bgVideo" loop muted autoplay playsinline style="display:none;"></video>
-  </div>
+  <!-- Hardcoded Wallpaper as requested -->
+  <video id="bgVideo" autoplay loop muted playsinline style="display:block;">
+    <source src="photos/anime-girl-balcony-view-red-balloons-moewalls-com.mp4" type="video/mp4">
+    <!-- Fallback if file extension is treated strictly -->
+    <source src="photos/anime-girl-balcony-view-red-balloons-moewalls-com.mp4" type="video/webm">
+  </video>
+  <div class="background" style="display:none;"></div>
 
   <div class="viewport">
     <div class="app">
@@ -84,6 +88,8 @@
                 </div>
                 <canvas id="netGraph" width="80" height="30"></canvas>
               </div>
+
+
             </div>
           </div>
         </header>
@@ -96,7 +102,6 @@
         </div>
 
         <div class="tasks" id="taskList"></div>
-
 
       </section>
 
@@ -118,6 +123,7 @@
       </section>
 
     </div>
+
   </div>
 
 
@@ -125,10 +131,11 @@
   <!-- Audio alarm (optional - add reminder.mp3 file to enable) -->
   <!-- <audio id="alarm" src="reminder.mp3"></audio> -->
 
+  <!-- Scripts -->
+  <script src="js/system.js"></script>
   <script src="js/script.js"></script>
   <script src="js/weather.js"></script>
   <script src="js/quote.js"></script>
-  <script src="js/system.js"></script>
 </body>
 
 </html>

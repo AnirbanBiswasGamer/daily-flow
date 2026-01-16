@@ -1,11 +1,4 @@
 {
-    "backgroundImage": {
-        "type": "folderDropdown",
-        "folder": "photos",
-        "text": "Select Background (Image or Video)",
-        "filter": "*.jpg|*.png|*.gif|*.webp|*.jpeg|*.mp4|*.webm|*.mkv|*.mov",
-        "value": "default.jpg"
-    },
     "cityName": {
         "text": "City Name (Leave empty to auto-detect)",
         "type": "textbox",

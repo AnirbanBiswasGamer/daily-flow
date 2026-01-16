@@ -85,100 +85,86 @@ if (cpuVal) cpuVal.textContent = "Wait...";
 // ==========================================
 // WALLPAPER ENGINE SUPPORT
 // ==========================================
+// Helper function to normalize background paths
+function normalizeBackgroundPath(rawPath) {
+  if (!rawPath) return null;
+
+  // Handle Lively's property object format
+  if (typeof rawPath === 'object' && rawPath.value !== undefined) {
+    rawPath = rawPath.value;
+  }
+
+  let path = rawPath.toString();
+
+  // Skip normalization for data URLs and blob URLs
+  if (path.startsWith('data:') || path.startsWith('blob:')) {
+    return path;
+  }
+
+  // Normalize backslashes to forward slashes
+  path = path.replace(/\\/g, '/');
+
+  // Check if it's already a file:// URL
+  if (path.startsWith('file:///')) {
+    return path;
+  }
+
+  // Check if it's an absolute Windows path (C:/, D:/, etc.)
+  if (/^[A-Z]:/i.test(path)) {
+    return `file:///${path}`;
+  }
+
+  // Check if it's a relative path (no drive letter, no protocol)
+  if (!path.includes(':') && !path.startsWith('/')) {
+    // Prepend photos folder if not already there
+    if (!path.startsWith('photos/')) {
+      path = 'photos/' + path;
+    }
+  }
+
+  return path;
+}
+
+// Helper function to detect video files
+function isVideoFile(path) {
+  return /\.(mp4|webm|mkv|mov|avi|wmv)$/i.test(path) ||
+    path.startsWith('data:video/');
+}
+
 window.wallpaperPropertyListener = {
   applyUserProperties: function (properties) {
-    // GLOBAL DEBUG OVERLAY (Must show if function runs)
-    let debugEl = document.getElementById('debug-overlay');
-    if (!debugEl) {
-      debugEl = document.createElement('div');
-      debugEl.id = 'debug-overlay';
-      debugEl.style.position = 'absolute';
-      debugEl.style.top = '10px';
-      debugEl.style.left = '10px';
-      debugEl.style.background = 'rgba(0,0,0,0.85)';
-      debugEl.style.color = '#fff';
-      debugEl.style.border = '1px solid #0f0';
-      debugEl.style.padding = '10px';
-      debugEl.style.zIndex = '99999';
-      debugEl.style.fontSize = '11px';
-      debugEl.style.pointerEvents = 'none';
-      debugEl.style.whiteSpace = 'pre-wrap';
-      debugEl.style.fontFamily = 'monospace';
-      document.body.appendChild(debugEl);
-    }
+    console.log('[Lively] Properties received:', properties);
 
-    // Dump properties to screen
-    try {
-      debugEl.innerHTML = `<strong>PROPS RECEIVED:</strong>\n${JSON.stringify(properties, null, 2).substring(0, 500)}`;
-    } catch (e) {
-      debugEl.textContent = "Props Error: " + e.message;
-    }
-
-    // Background Image Handler
-    if (properties.backgroundImage) {
-      // Handle WE object or Lively direct value
-      let path = properties.backgroundImage;
-      if (path && typeof path === 'object' && path.value !== undefined) {
-        path = path.value;
-      }
-
-      if (path) {
-        // Fix Windows Backslashes to Forward Slashes (for CSS URL)
-        path = path.toString().replace(/\\/g, '/');
-
-        // Check if it's a relative filename (from photos folder)
-        // If it doesn't look like a full path (C:/ or http), assume local
-        if (path.indexOf(':') === -1 && !path.startsWith('/') && !path.startsWith('file')) {
-          // Ensure we don't double-prepend
-          if (!path.startsWith('photos/')) {
-            path = 'photos/' + path;
-          }
-        }
-
-        const isVideo = path.match(/\.(mp4|webm|mkv|mov|avi|wmv)$/i);
-        const encodedPath = encodeURI(path);
-
-        // Append path info
-        debugEl.innerHTML += `\n\n<strong>PATH LOGIC:</strong>\nRaw: ${path}\nIs Video: ${!!isVideo}\nEncoded: ${encodedPath}`;
-
-        // console.log("Applying Background:", path);
-
-        const bgEl = document.querySelector('.background');
-        const videoEl = document.getElementById('bgVideo');
-
-        if (isVideo && videoEl) {
-          videoEl.src = encodedPath; // Use encoded for src too? Safe.
-          videoEl.style.display = 'block';
-          videoEl.play().catch(e => {
-            console.warn("Autoplay blocked", e);
-            debugEl.innerHTML += `<br>Play Error: ${e.message}`;
-          });
-          if (bgEl) bgEl.style.backgroundImage = 'none';
-        } else {
-          if (videoEl) {
-            videoEl.pause();
-            videoEl.style.display = 'none';
-          }
-          if (bgEl) {
-            bgEl.style.backgroundImage = `url('${encodedPath}')`;
-            debugEl.innerHTML += `\nSet CSS BG`;
-          }
-        }
-      }
-    }
+    // Background logic disabled (Hardcoded)
 
     // City Name Handler
     if (properties.cityName) {
-      // Save to localStorage or update weather directly if supported
       if (properties.cityName.value) {
         localStorage.setItem('userCity', properties.cityName.value);
+        console.log('[Lively] City updated:', properties.cityName.value);
+
         // Trigger weather refresh if function exists
-        if (window.getWeather) window.getWeather(properties.cityName.value);
+        if (window.getWeather) {
+          window.getWeather(properties.cityName.value);
+        }
       }
     }
+
+    // Quote Interval Handler (if needed in future)
+    if (properties.quoteInterval) {
+      const interval = properties.quoteInterval.value || properties.quoteInterval;
+      localStorage.setItem('quoteInterval', interval);
+      console.log('[Lively] Quote interval updated:', interval);
+    }
   },
-  applyGeneralProperties: function (properties) { }
+
+  applyGeneralProperties: function (properties) {
+    console.log('[Lively] General properties received:', properties);
+  }
 };
+
+// COMPATIBILITY: Older Lively versions might use this naming
+window.livelyPropertyListener = window.wallpaperPropertyListener;
 
 function updateStatsWE() {
   if (!isLivelyRunning && window.wallpaperSystemInfo && window.wallpaperSystemInfo.cpuUsage !== undefined) {
